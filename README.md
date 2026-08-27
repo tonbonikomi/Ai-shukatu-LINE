@@ -12,6 +12,7 @@
 | [LINEプラットフォーム調査結果](docs/line-platform-research.md) | 通数カウント・`getGroupMemberIds` の条件・userIDのプロバイダースコープの裏取りと、そこから導かれる設計方針 |
 | [SPEC草案](docs/spec.md) | データモデル・機能仕様・セキュリティ・通数の運用ルール |
 | [MVP実装計画](docs/mvp-implementation-plan.md) | フェーズ分割・依存関係・受け入れ条件・リスク |
+| [運用設計](docs/operations.md) | 誰が何をするか。日次・週次・月次の作業、案件投稿の型、例外時の手順、立ち上げ期の進め方 |
 
 ## 現在の状態
 
