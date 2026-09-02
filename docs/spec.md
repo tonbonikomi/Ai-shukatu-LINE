@@ -24,6 +24,15 @@
 | A5 | バックエンドは既存の **Supabase + n8n** を共有する | 構想メモ 冒頭 | 中。別基盤なら §3 のスキーマはそのまま、§4 の実行環境だけ差し替え |
 | A6 | 紹介料の支払いは既存の即払い／月末払いの仕組みに乗せる。**法的建付けの確定前は紹介料の支払いを開始しない** | 構想メモ §8-5 | 小。記録は初日から取るので後から遡って支払える |
 
+### 確定した方針（[決定ログ](decisions.md)）
+
+| # | 決定 |
+|---|---|
+| [D-001](decisions.md#d-001) | 入口リンクは**運営が選んで手渡し**する。一柳による自動発行はしない |
+| [D-002](decisions.md#d-002) | 直接招待された人は、登録を依頼し、応じなければ退出させる |
+| [D-003](decisions.md#d-003) | グループ名は「{地域}{卒年}バイトコミュニティ」 |
+| [D-004](decisions.md#d-004) | 入口リンクは **LIFF直リンク**。⚠ LIFFアプリを作り直すと配布済みリンクが全て死ぬ |
+
 ---
 
 ## 1. スコープ
@@ -46,7 +55,7 @@
 | 名前 | 意味 |
 |---|---|
 | 一柳 | コミュニティ用の LINE公式アカウント（Messaging APIチャネル） |
-| 入口リンク | 招待したい学生が配る `https://liff.line.me/{LIFF_ID}?t={token}` |
+| 入口リンク | 招待したい学生が配る `https://liff.line.me/{LIFF_ID}?t={token}`（[D-004](decisions.md#d-004)） |
 | グループ招待リンク | LINEグループへの参加URL。**一柳のみが保持し、登録完了者にだけ送る** |
 | `line_user_id` | プロバイダースコープのユーザーID。LIFFとwebhookで一致する前提（A1） |
 | `token` | 入口リンクに埋める招待トークン。発行・無効化可能 |
@@ -122,7 +131,7 @@ create index on community.members (graduation_year, region);
 create table community.line_groups (
   id               uuid primary key default gen_random_uuid(),
   line_group_id    text unique,                      -- botが入室するまで不明なのでnull許容
-  name             text not null,                    -- 例:「AI就活 関西 28卒」
+  name             text not null,                    -- 例:「関西28卒バイトコミュニティ」
   graduation_year  integer not null,
   region           text not null,
   invite_url       text,                             -- LINEアプリで手動発行したURL
@@ -298,6 +307,10 @@ create table community.referrer_scores (
 
 ### 4.4 招待トークン
 
+**発行ポリシー（[D-001](decisions.md#d-001)）: 運営が選んで手渡しする。自動発行はしない。**
+登録完了や案件参加をトリガーにした自動発行は実装しない。
+将来切り替える場合も、発行トリガーを足すだけでスキーマとフローは変わらない。
+
 **発行**
 - 運営が管理画面から発行。`label` に用途を書く（誰に渡したか分かるように）
 - token は 暗号論的乱数 16バイト → base64url（22文字）。連番・推測可能な値は使わない
@@ -390,7 +403,9 @@ for each joined.members[].userId:
     └─ 見つからない（未登録者）
          resolution='unknown_notified'
          運営に通知（§4.8）
-         ※ botは退出させられない。対応は運営の個人アカウントから手動（構想メモ §9）
+         一柳から登録を依頼（プッシュ1通）→ 猶予期間内に登録されなければ
+         運営の業務用アカウントから退出（D-002）
+         ※ botは退出させられない。退出の操作は必ず人手（構想メモ §9）
 ```
 
 **`memberLeft`**: `group_memberships.state='left'`, `left_at` を記録。`member_count` を再計算。
@@ -487,6 +502,7 @@ webhookの取りこぼしがあるとカウンタがずれ、それが定員判�
 
 | # | 宿題 | 担当 |
 |---|---|---|
+| 0 | D-002 の猶予期間（推奨3日）とリマインド回数（推奨1回）を決める | kaz |
 | 1 | 既存就活DBのプロバイダー確認 → 一柳の2チャネルを同一プロバイダーに作成 | kaz |
 | 2 | userId 一致のテスト（§4.1 の着手前チェック） | 実装 |
 | 3 | 認証済みアカウントの申請を出すか決める（推奨: 出す） | kaz |
