@@ -1,0 +1,96 @@
+:root {
+  --bg: #f6f7f5;
+  --surface: #ffffff;
+  --ink: #16211e;
+  --muted: #5d6865;
+  --line: #dce0d9;
+  --accent: #06c755; /* LINE の緑。押す場所だとひと目で分かるように */
+  --accent-ink: #ffffff;
+  --danger: #a02b22;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121513;
+    --surface: #1a201e;
+    --ink: #e7ebe7;
+    --muted: #98a29e;
+    --line: #2c332f;
+    --accent: #06c755;
+    --accent-ink: #05210f;
+    --danger: #e68078;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  font-size: 16px; /* iOS の自動ズームを避けるため 16px を下回らないこと */
+  line-height: 1.7;
+}
+
+main { max-width: 30rem; margin: 0 auto; padding: 1.25rem 1.25rem 3rem; }
+
+h1 { font-size: 1.35rem; margin: 0 0 .3rem; }
+.sub { color: var(--muted); font-size: .88rem; margin: 0 0 1.5rem; }
+
+.field { display: block; margin-bottom: 1.1rem; }
+.field > span { display: block; font-size: .88rem; font-weight: 700; margin-bottom: .35rem; }
+.field .hint { display: block; font-weight: 400; color: var(--muted); font-size: .8rem; margin-top: .3rem; }
+
+input[type='text'], input[type='date'], select {
+  width: 100%;
+  padding: .7rem .8rem;
+  font-size: 16px;
+  font-family: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  appearance: none;
+}
+input:focus-visible, select:focus-visible, button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.confirm {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: .9rem 1rem;
+  margin-bottom: 1.1rem;
+  font-size: .9rem;
+}
+.confirm strong { font-size: 1.05rem; }
+
+.check { display: flex; gap: .6rem; align-items: flex-start; font-size: .88rem; margin-bottom: 1.1rem; }
+.check input { margin-top: .35rem; flex: none; width: 1.1rem; height: 1.1rem; }
+
+button {
+  width: 100%;
+  padding: .9rem;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: inherit;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border: 0;
+  border-radius: 6px;
+}
+button:disabled { opacity: .5; }
+
+.error {
+  color: var(--danger);
+  font-size: .88rem;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  padding: .7rem .9rem;
+  margin-bottom: 1.1rem;
+}
+
+.center { text-align: center; padding: 3rem 1rem; color: var(--muted); }

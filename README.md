@@ -17,6 +17,45 @@
 | [決定ログ](docs/decisions.md) | 決まった方針と、その理由・引き受けたトレードオフ・覆すときのコスト |
 | [用語集](docs/glossary.md) | LIFF・プロバイダー・通数など、資料に出てくる言葉の説明 |
 
+## 開発
+
+```bash
+npm install
+cp .env.example .env.local     # 値を埋める
+npm run dev                    # http://localhost:3000/register
+
+npm run check                  # 型チェック + ユニットテスト + DBテスト
+```
+
+| コマンド | 内容 |
+|---|---|
+| `npm run typecheck` | TypeScript の型チェック |
+| `npm run test` | ユニットテスト（vitest） |
+| `npm run test:db` | 空のDBにマイグレーションを流してSQLのテスト |
+| `npm run build` | 本番ビルド |
+
+### 構成
+
+```
+src/
+├── app/
+│   ├── register/                  登録画面（LIFF）
+│   └── api/
+│       ├── invite/[token]/        入口リンクの検証
+│       ├── register/              登録の受付
+│       └── line/webhook/          LINE からの通知の受け口
+├── lib/
+│   ├── domain/                    卒業年度の計算・入力検証・トークン生成
+│   ├── line/                      署名検証・イベント振り分け・送信
+│   ├── liff/                      IDトークンの検証
+│   └── db.ts                      Postgres への直接接続
+└── server/                        登録処理・入室検知・運営通知・文面
+supabase/                          マイグレーションとSQLのテスト
+```
+
+判断が入るところ（卒業年度の計算・署名検証・イベントの振り分け・入力検証）は
+`src/lib` の純粋な関数に切り出してあり、テストで固定してある。
+
 ## 現在の状態
 
 構想フェーズ。着手前に確定すべき事項が **4件** 残っている（構想メモ §8。うち通数プランは調査済み）。
