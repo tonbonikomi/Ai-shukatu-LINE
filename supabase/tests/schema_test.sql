@@ -172,6 +172,35 @@ select pg_temp.assert_rejects($$
 $$, '8. group_memberships の重複');
 
 -- ---------------------------------------------------------------------------
+-- 8.5 トークンの発行
+-- ---------------------------------------------------------------------------
+do $$
+declare t1 text; t2 text;
+begin
+  t1 := community.new_invite_token('関西28卒・A');
+  t2 := community.new_invite_token('関西28卒・B');
+
+  if t1 !~ '^[0-9a-f]{32}$' then
+    raise exception 'FAIL: 8.5a. トークンが32桁の16進文字列でない: %', t1;
+  end if;
+  if t1 = t2 then
+    raise exception 'FAIL: 8.5b. 発行するたびに違う値になっていない';
+  end if;
+  if (select reason from community.check_invite_token(t1)) <> 'valid' then
+    raise exception 'FAIL: 8.5c. 発行したトークンがすぐ有効にならない';
+  end if;
+  if not exists (select 1 from community.active_invite_tokens where token = t1) then
+    raise exception 'FAIL: 8.5d. 一覧に出てこない';
+  end if;
+end $$;
+
+-- 期限切れ・使い切りは一覧に出さない
+select pg_temp.assert(
+  not exists (select 1 from community.active_invite_tokens
+               where token in ('tok_expired', 'tok_used_up', 'tok_revoked')),
+  '8.5e. 使えないトークンを一覧に出さない');
+
+-- ---------------------------------------------------------------------------
 -- 9. 月次の消費通数
 -- ---------------------------------------------------------------------------
 insert into community.group_broadcasts (group_id, kind, body, message_count)
@@ -208,6 +237,6 @@ select pg_temp.assert(
 
 \o
 
-\echo '✅ すべてのテストを通過しました（10項目 / 24アサーション）'
+\echo '✅ すべてのテストを通過しました（11項目 / 29アサーション）'
 
 rollback;

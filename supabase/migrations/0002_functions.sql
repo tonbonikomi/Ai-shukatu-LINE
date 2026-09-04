@@ -101,3 +101,59 @@ create or replace view community.monthly_message_usage as
     from community.group_broadcasts
    group by 1
    order by 1 desc;
+
+-- ---------------------------------------------------------------------------
+-- 入口リンクのトークンを発行する（docs/spec.md §4.4 / docs/decisions.md D-001）
+--
+-- 発行は運営が手動で行う方針なので、SQL 1行で発行できるようにしてある。
+--   select community.new_invite_token('関西28卒・田中');
+--
+-- gen_random_uuid() は PostgreSQL 13 以降、暗号論的に安全な乱数を使う。
+-- ハイフンを除いた32桁の16進文字列（128bit）をトークンにする。
+-- 拡張機能を必要としないので、どの Supabase プロジェクトでもそのまま動く。
+-- ---------------------------------------------------------------------------
+create or replace function community.new_invite_token(
+  p_label           text        default null,
+  p_owner_member_id uuid        default null,
+  p_max_uses        integer     default null,
+  p_expires_at      timestamptz default null,
+  p_created_by      text        default 'manual'
+)
+returns text
+language plpgsql
+as $$
+declare
+  v_token text;
+begin
+  v_token := replace(gen_random_uuid()::text, '-', '');
+
+  insert into community.invite_tokens
+    (token, label, owner_member_id, max_uses, expires_at, created_by)
+  values
+    (v_token, p_label, p_owner_member_id, p_max_uses, p_expires_at, p_created_by);
+
+  return v_token;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- 発行済みの入口リンク一覧。
+-- LIFF ID はDBに持たないので、リンクの組み立ては呼び出し側で行う。
+--
+--   select label, 'https://liff.line.me/<LIFF_ID>?t=' || token as link
+--     from community.active_invite_tokens;
+-- ---------------------------------------------------------------------------
+create or replace view community.active_invite_tokens as
+  select t.token,
+         t.label,
+         m.name as owner_name,
+         t.used_count,
+         t.max_uses,
+         t.expires_at,
+         t.created_at
+    from community.invite_tokens t
+    left join community.members m on m.id = t.owner_member_id
+   where t.status = 'active'
+     and (t.expires_at is null or t.expires_at > now())
+     and (t.max_uses is null or t.used_count < t.max_uses)
+   order by t.created_at desc;
